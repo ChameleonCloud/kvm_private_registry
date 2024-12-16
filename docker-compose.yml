@@ -1,0 +1,46 @@
+services:
+
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt:/letsencrypt"
+    labels:
+      - "traefik.exposedByDefault=false"
+
+  registry:
+    image: registry:2
+    container_name: registry
+    restart: unless-stopped
+    environment:
+      - REGISTRY_HTTP_ADDR=0.0.0.0:5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./registry_data:/var/lib/registry
+      - ./config.yml:/etc/docker/registry/config.yml
+      - ./htpasswd:/htpasswd
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.registry.rule=Host(`${HOST}`)"
+      - "traefik.http.routers.registry.entrypoints=websecure"
+      - "traefik.http.routers.registry.tls.certresolver=letsencrypt"
+      - "traefik.http.services.registry.loadbalancer.server.port=5000"
+
+volumes:
+  registry_data:
+  letsencrypt:
+

@@ -1,0 +1,19 @@
+version: 0.1
+
+log:
+  level: debug
+
+http:
+  headers:
+    X-Content-Type-Options: [nosniff]
+  addr: :5000
+
+auth:
+  htpasswd:
+    realm: Registry Realm
+    path: /htpasswd
+
+storage:
+  filesystem:
+    rootdirectory: /var/lib/registry
+
